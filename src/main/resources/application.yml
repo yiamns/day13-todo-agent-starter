@@ -1,0 +1,24 @@
+spring:
+  profiles:
+    active: dev # use application-dev.yml
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/afs
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: "afs"
+    password: "afs"
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+# create application-dev.yml, then copy follow code:
+#sprig:
+#  ai:
+#    openai:
+#      base-url: https://api.deepseek.com
+#      api-key:
+#      chat:
+#        options:
+#          model: deepseek-chat
