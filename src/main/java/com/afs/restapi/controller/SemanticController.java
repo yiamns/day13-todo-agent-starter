@@ -26,7 +26,7 @@ public class SemanticController {
 
     @PostMapping("/plan")
     String plan(@RequestBody PlanRequestDto request) {
-        String result = plannerService.plan(request.getUserInput());
-        return result;
+        String userInput = request.getUserInput();
+        return plannerService.plan(userInput);
     }
 }
