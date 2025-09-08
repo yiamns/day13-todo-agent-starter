@@ -1,4 +1,4 @@
-package com.afs.restapi.config;
+package com.afs.restapi.agent;
 
 import com.afs.restapi.service.TodoService;
 import org.springframework.ai.tool.ToolCallbackProvider;

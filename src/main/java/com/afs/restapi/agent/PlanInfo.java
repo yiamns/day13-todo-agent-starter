@@ -1,4 +1,4 @@
-package com.afs.restapi.tool;
+package com.afs.restapi.agent;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
