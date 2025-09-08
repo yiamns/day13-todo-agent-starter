@@ -415,7 +415,7 @@ public class PlannerService {
      */
     private String loadPromptTemplate() {
         try {
-            ClassPathResource resource = new ClassPathResource("prompt.txt");
+            ClassPathResource resource = new ClassPathResource("plan-prompt.txt");
             return resource.getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
         } catch (Exception e) {
             logger.error("Unable to load prompt template", e);
@@ -442,20 +442,29 @@ public class PlannerService {
      */
     private String callLLMForFinalResult(String userInput, String executionResult, PlanTaskResult executionPlan) {
         logger.info("Calling LLM to generate final result for user input: {}", userInput);
-        
-        // Prepare the system prompt for final result generation
+
+        // Prepare the system prompt for final result generation with variable substitution
         String systemPrompt = prepareFinalResultSystemPrompt();
-        
-        // Prepare the user message with context
-        String userMessage = prepareFinalResultUserMessage(userInput, executionResult, executionPlan);
-        
+
+        // Prepare execution plan summary
+        String executionPlanSummary = prepareExecutionPlanSummary(executionPlan);
+
+        // Replace variables in the system prompt
+        systemPrompt = systemPrompt
+                .replace("{{ $userInput }}", userInput)
+                .replace("{{$userInput}}", userInput)
+                .replace("{{ $executionPlan }}", executionPlanSummary)
+                .replace("{{$executionPlan}}", executionPlanSummary)
+                .replace("{{ $executionResult }}", executionResult != null ? executionResult : "No execution results")
+                .replace("{{$executionResult}}", executionResult != null ? executionResult : "No execution results");
+
         // Call LLM to generate final result
         String finalResult = chatClient.prompt()
                 .system(systemPrompt)
-                .user(userMessage)
+                .user("Please provide a comprehensive summary based on the above information.")
                 .call()
                 .content();
-        
+
         logger.info("LLM generated final result, length: {}", finalResult != null ? finalResult.length() : 0);
         return finalResult;
     }
@@ -464,45 +473,32 @@ public class PlannerService {
      * Prepare system prompt for final result generation
      */
     private String prepareFinalResultSystemPrompt() {
-        return """
-            You are a professional AI assistant responsible for generating final result reports for task execution.
-            
-            Your tasks are:
-            1. Analyze the user's original requirements
-            2. Understand the execution plan and execution results
-            3. Generate a clear, professional, and user-friendly final report
-            """;
+        try {
+            ClassPathResource resource = new ClassPathResource("summary-prompt.txt");
+            return resource.getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            logger.error("Unable to load summary prompt template", e);
+            throw new RuntimeException("Unable to load summary prompt template", e);
+        }
     }
 
     /**
-     * Prepare user message for final result generation
+     * Prepare execution plan summary for template substitution
      */
-    private String prepareFinalResultUserMessage(String userInput, String executionResult, PlanTaskResult executionPlan) {
-        StringBuilder message = new StringBuilder();
-
-        message.append("## User Requirements\n");
-        message.append(userInput).append("\n\n");
-
-        message.append("## Execution Plan\n");
-        message.append("Total of ").append(executionPlan.getPlans().size()).append(" steps executed:\n");
+    private String prepareExecutionPlanSummary(PlanTaskResult executionPlan) {
+        StringBuilder summary = new StringBuilder();
+        summary.append("Total of ").append(executionPlan.getPlans().size()).append(" steps executed:\n");
 
         for (int i = 0; i < executionPlan.getPlans().size(); i++) {
             PlanInfo plan = executionPlan.getPlans().get(i);
-            message.append(i + 1).append(". ").append(plan.getFunctionName());
+            summary.append(i + 1).append(". ").append(plan.getFunctionName());
             if (plan.getDescription() != null && !plan.getDescription().isEmpty()) {
-                message.append(" - ").append(plan.getDescription());
+                summary.append(" - ").append(plan.getDescription());
             }
-            message.append("\n");
-        }
-        message.append("\n");
-
-        // Execution results
-        if (executionResult != null && !executionResult.trim().isEmpty()) {
-            message.append("## Execution Results\n");
-            message.append(executionResult).append("\n\n");
+            summary.append("\n");
         }
 
-        return message.toString();
+        return summary.toString();
     }
 
     /**
