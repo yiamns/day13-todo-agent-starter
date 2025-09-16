@@ -3,7 +3,9 @@ package com.afs.restapi.controller;
 import com.afs.restapi.dto.PlanRequestDto;
 import com.afs.restapi.agent.PlannerService;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 @RestController
 public class SemanticController {
@@ -17,10 +19,19 @@ public class SemanticController {
     }
 
     @GetMapping("/chat")
-    String generation(String userInput) {
+    String normlChat(String userInput) {
         return this.chatClient.prompt()
                 .user(userInput)
                 .call()
+                .content();
+    }
+
+
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    Flux<String> streamChat(@RequestParam String userInput) {
+        return this.chatClient.prompt()
+                .user(userInput)
+                .stream()
                 .content();
     }
 
