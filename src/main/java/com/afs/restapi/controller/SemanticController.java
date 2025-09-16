@@ -19,7 +19,7 @@ public class SemanticController {
     }
 
     @GetMapping("/chat")
-    String normlChat(String userInput) {
+    String normalChat(String userInput) {
         return this.chatClient.prompt()
                 .user(userInput)
                 .call()
