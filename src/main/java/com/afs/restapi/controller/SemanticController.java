@@ -26,8 +26,13 @@ public class SemanticController {
                 .content();
     }
 
+    @PostMapping("/plan")
+    String plan(@RequestBody PlanRequestDto request) {
+        String userInput = request.getUserInput();
+        return plannerService.plan(userInput);
+    }
 
-    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     Flux<String> streamChat(@RequestParam String userInput) {
         return this.chatClient.prompt()
                 .user(userInput)
@@ -35,9 +40,13 @@ public class SemanticController {
                 .content();
     }
 
-    @PostMapping("/plan")
-    String plan(@RequestBody PlanRequestDto request) {
-        String userInput = request.getUserInput();
-        return plannerService.plan(userInput);
+    @GetMapping(value = "/chat/todo", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    Flux<String> simplePromptExample(@RequestParam String userInput) {
+        return this.chatClient.prompt()
+                .system("Your are an Todo tasks manager, you should only answer about Todo manage related questions." +
+                        "If the user ask you about other things, you should answer you don't know. ")
+                .user(userInput)
+                .stream()
+                .content();
     }
 }
